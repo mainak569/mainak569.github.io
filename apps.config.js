@@ -7,6 +7,7 @@ import { displayTrash } from './components/apps/trash';
 import { displayGedit } from './components/apps/gedit';
 import { displayAboutMainak } from './components/apps/mainak';
 import { displayTerminalCalc } from './components/apps/calc';
+import { displayContacts } from './components/apps/contacts';
 
 const apps = [
     {
@@ -82,8 +83,17 @@ const apps = [
         screen: displayTrash,
     },
     {
+        id: "contacts",
+        title: "Contacts",
+        icon: './themes/Yaru/apps/contacts.svg',
+        disabled: false,
+        favourite: false,
+        desktop_shortcut: true,
+        screen: displayContacts,
+    },
+    {
         id: "gedit",
-        title: "Contact Me",
+        title: "Email Me",
         icon: './themes/Yaru/apps/gedit.png',
         disabled: false,
         favourite: false,

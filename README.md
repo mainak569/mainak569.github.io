@@ -19,19 +19,23 @@ npm run build    # static export to ./out
 | What | File |
 | --- | --- |
 | About / Education / Experience / Projects / Skills content | `components/apps/mainak.js` |
+| Contacts app | `components/apps/contacts.js` |
+| Email Me form | `components/apps/gedit.js` |
+| Calculator | `components/apps/calc.js` |
 | Desktop & dock apps | `apps.config.js` |
 | Terminal commands & folders | `components/apps/terminal.js` |
 | Resume PDF | `public/files/Mainak-Das-Resume.pdf` |
-| Avatar | `public/images/logos/avatar.svg` |
+| Profile photo | `public/images/logos/mainak.webp` |
 | SEO tags | `components/SEO/Meta.js` |
 
 ## Deployment
 
 Every push to `main` builds the site and deploys it to GitHub Pages via `.github/workflows/deploy.yml`. The custom domain is set by `public/CNAME`.
 
-### Optional: contact form & analytics
+### Contact form
 
-Without configuration, the **Contact Me** app opens the visitor's mail client. To send messages directly, create an [EmailJS](https://www.emailjs.com/) service and add these repository secrets (Settings → Secrets and variables → Actions):
+The **Email Me** app posts to [FormSubmit](https://formsubmit.co) — no backend or API keys. The very first message sends an activation email to `mainak.lnmiit@gmail.com`; click **Activate Form** once and every later message is delivered straight to the inbox.
 
-- `NEXT_PUBLIC_USER_ID`, `NEXT_PUBLIC_SERVICE_ID`, `NEXT_PUBLIC_TEMPLATE_ID` — EmailJS
-- `NEXT_PUBLIC_TRACKING_ID` — Google Analytics 4 (optional)
+### Optional: analytics
+
+Add a `NEXT_PUBLIC_TRACKING_ID` repository secret (Google Analytics 4) to enable page-view tracking.

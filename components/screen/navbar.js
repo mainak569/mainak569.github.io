@@ -7,8 +7,65 @@ export default class Navbar extends Component {
 	constructor() {
 		super();
 		this.state = {
-			status_card: false
+			status_card: false,
+			system: {
+				volume: 75,
+				muted: false,
+				wifi: true,
+				bluetooth: false,
+				online: true,
+				battery: { level: null, charging: false, chargingTime: Infinity, dischargingTime: Infinity },
+			},
 		};
+	}
+
+	componentDidMount() {
+		let saved = {};
+		try {
+			saved = JSON.parse(localStorage.getItem('system-settings')) || {};
+		} catch (e) { }
+		this.updateSystem({ ...saved, online: navigator.onLine }, false);
+
+		window.addEventListener('online', this.handleOnline);
+		window.addEventListener('offline', this.handleOnline);
+
+		// real battery status where the browser supports it (Chromium based browsers)
+		if (navigator.getBattery) {
+			navigator.getBattery().then(battery => {
+				this.battery = battery;
+				this.syncBattery();
+				['levelchange', 'chargingchange', 'chargingtimechange', 'dischargingtimechange']
+					.forEach(evt => battery.addEventListener(evt, this.syncBattery));
+			}).catch(() => { });
+		}
+	}
+
+	componentWillUnmount() {
+		window.removeEventListener('online', this.handleOnline);
+		window.removeEventListener('offline', this.handleOnline);
+		if (this.battery) {
+			['levelchange', 'chargingchange', 'chargingtimechange', 'dischargingtimechange']
+				.forEach(evt => this.battery.removeEventListener(evt, this.syncBattery));
+		}
+	}
+
+	handleOnline = () => this.updateSystem({ online: navigator.onLine }, false);
+
+	syncBattery = () => {
+		const { level, charging, chargingTime, dischargingTime } = this.battery;
+		this.updateSystem({ battery: { level, charging, chargingTime, dischargingTime } }, false);
+	}
+
+	updateSystem = (changes, persist = true) => {
+		this.setState(prev => ({ system: { ...prev.system, ...changes } }), () => {
+			if (!persist) return;
+			const { volume, muted, wifi, bluetooth } = this.state.system;
+			localStorage.setItem('system-settings', JSON.stringify({ volume, muted, wifi, bluetooth }));
+		});
+	}
+
+	toggleStatusCard = () => {
+		this.setState(prev => ({ status_card: !prev.status_card }));
 	}
 
 	render() {
@@ -32,22 +89,23 @@ export default class Navbar extends Component {
 				</div>
 				<div
 					id="status-bar"
-					tabIndex="0"
-					onFocus={() => {
-						this.setState({ status_card: true });
-					}}
-					// removed onBlur from here
 					className={
-						'relative pr-3 pl-3 outline-none transition duration-100 ease-in-out border-b-2 border-transparent focus:border-ubb-orange py-1 '
+						'relative outline-none transition duration-100 ease-in-out border-b-2 ' +
+						(this.state.status_card ? 'border-ubb-orange' : 'border-transparent')
 					}
 				>
-					<Status />
+					{/* clicking the icons toggles the card; the card ignores these clicks as "outside" clicks */}
+					<div className="status-toggle pr-3 pl-3 py-1 cursor-default" onClick={this.toggleStatusCard}>
+						<Status system={this.state.system} />
+					</div>
 					<StatusCard
+						outsideClickIgnoreClass="status-toggle"
 						shutDown={this.props.shutDown}
 						lockScreen={this.props.lockScreen}
 						visible={this.state.status_card}
+						system={this.state.system}
+						updateSystem={this.updateSystem}
 						toggleVisible={() => {
-							// this prop is used in statusCard component in handleClickOutside callback using react-onclickoutside
 							this.setState({ status_card: false });
 						}}
 					/>

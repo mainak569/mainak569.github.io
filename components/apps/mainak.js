@@ -122,8 +122,8 @@ function ExtLink({ href, children, className = "" }) {
 function About() {
     return (
         <>
-            <div className="w-20 md:w-28 my-4 rounded-full shadow-lg">
-                <img className="w-full rounded-full" src="./images/logos/avatar.svg" alt="Mainak Das" />
+            <div className="w-24 h-24 md:w-32 md:h-32 my-4 rounded-full shadow-lg overflow-hidden border-2 border-white border-opacity-30 flex-shrink-0">
+                <img className="w-full h-full object-cover" src="./images/logos/mainak.webp" alt="Mainak Das" />
             </div>
             <div className=" mt-4 md:mt-8 text-lg md:text-2xl text-center px-1">
                 <div>my name is <span className="font-bold">Mainak Das</span> ,</div>
@@ -362,7 +362,6 @@ function Projects() {
                                 <div className="flex flex-wrap justify-between items-center">
                                     <div className='flex flex-wrap items-center'>
                                         <a href={project.link} target="_blank" rel="noreferrer" className=" text-base md:text-lg mr-2 hover:underline">{project.name.toLowerCase()}</a>
-                                        <iframe src={`https://ghbtns.com/github-btn.html?user=mainak569&repo=${project.name}&type=star&count=true`} frameBorder="0" scrolling="0" width="100" height="20" title={project.name.toLowerCase() + "-star"}></iframe>
                                     </div>
                                     <div className="text-gray-300 font-light text-sm">{project.date}</div>
                                 </div>
@@ -399,33 +398,79 @@ function Projects() {
 
 function Skills() {
     const badge = (label, color, logo, logoColor = "white") =>
-        `https://img.shields.io/badge/${encodeURIComponent(label.replace(/-/g, "--"))}-${color}?style=flat&logo=${encodeURIComponent(logo)}&logoColor=${logoColor}`;
+        `https://img.shields.io/badge/${encodeURIComponent(label.replace(/-/g, "--").replace(/_/g, "__"))}-${color}?style=flat${logo ? `&logo=${encodeURIComponent(logo)}` : ""}&logoColor=${logoColor}`;
 
-    const languages = [
-        ["C++", "00599C", "cplusplus"],
-        ["C", "A8B9CC", "c", "000000"],
-        ["JavaScript", "F7DF1E", "javascript", "000000"],
-        ["TypeScript", "3178C6", "typescript"],
-        ["Python", "3776AB", "python"],
-        ["Java", "ED8B00", "openjdk"],
-        ["Bash", "4EAA25", "gnubash"],
+    const categories = [
+        {
+            title: "Languages",
+            items: [
+                ["C++", "00599C", "cplusplus"],
+                ["C", "A8B9CC", "c", "000000"],
+                ["JavaScript", "F7DF1E", "javascript", "000000"],
+                ["TypeScript", "3178C6", "typescript"],
+                ["Python", "3776AB", "python"],
+                ["Java", "ED8B00", "openjdk"],
+                ["SQL", "336791", "postgresql"],
+                ["Bash", "4EAA25", "gnubash"],
+            ],
+        },
+        {
+            title: "Frontend",
+            items: [
+                ["React", "20232A", "react", "61DAFB"],
+                ["Next.js", "000000", "nextdotjs"],
+                ["Tailwind CSS", "06B6D4", "tailwindcss"],
+                ["shadcn/ui", "000000", "shadcnui"],
+                ["Vite", "646CFF", "vite"],
+            ],
+        },
+        {
+            title: "Backend & APIs",
+            items: [
+                ["Node.js", "339933", "nodedotjs"],
+                ["Django", "092E20", "django"],
+                ["Django REST Framework", "A30000", "django"],
+                ["tRPC", "2596BE", "trpc"],
+                ["REST APIs", "555555", "openapiinitiative"],
+                ["Convex", "EE342F", ""],
+                ["Inngest", "111827", ""],
+                ["Clerk", "6C47FF", "clerk"],
+            ],
+        },
+        {
+            title: "Databases & ORM",
+            items: [
+                ["PostgreSQL", "4169E1", "postgresql"],
+                ["MongoDB", "47A248", "mongodb"],
+                ["Prisma", "2D3748", "prisma"],
+            ],
+        },
+        {
+            title: "AI / ML & Data",
+            items: [
+                ["PyTorch", "EE4C2C", "pytorch"],
+                ["GANs / U-Net", "8E44AD", ""],
+                ["Google Gemini", "8E75B2", "googlegemini"],
+                ["E2B Sandboxes", "FF8800", ""],
+                ["Pandas", "150458", "pandas"],
+                ["Power BI", "F2C811", "powerbi", "000000"],
+                ["Alteryx", "0078C0", "alteryx"],
+            ],
+        },
+        {
+            title: "Tools & Testing",
+            items: [
+                ["Git", "F05032", "git"],
+                ["GitHub", "181717", "github"],
+                ["Linux", "FCC624", "linux", "000000"],
+                ["Jest", "C21325", "jest"],
+                ["Vercel", "000000", "vercel"],
+            ],
+        },
     ];
-    const frameworks = [
-        ["React", "20232A", "react", "61DAFB"],
-        ["Next.js", "000000", "nextdotjs"],
-        ["Node.js", "339933", "nodedotjs"],
-        ["Django", "092E20", "django"],
-        ["Tailwind CSS", "06B6D4", "tailwindcss"],
-        ["PyTorch", "EE4C2C", "pytorch"],
-        ["Pandas", "150458", "pandas"],
-    ];
-    const tools = [
-        ["PostgreSQL", "4169E1", "postgresql"],
-        ["MongoDB", "47A248", "mongodb"],
-        ["Prisma", "2D3748", "prisma"],
-        ["Git", "F05032", "git"],
-        ["Power BI", "F2C811", "powerbi", "000000"],
-    ];
+
+    const core = ["Data Structures & Algorithms", "Design & Analysis of Algorithms", "Machine Learning", "Computer Vision", "Object-Oriented Programming"];
+
     const profiles = [
         { name: "LeetCode", note: "Knight · 1900+", link: "https://leetcode.com/u/mainak13/" },
         { name: "CodeChef", note: "3★", link: "https://www.codechef.com/users/mainak_13" },
@@ -434,48 +479,42 @@ function Skills() {
         { name: "Code360", note: "Coding Ninjas", link: "https://www.naukri.com/code360/profile/c67f4463-4965-48ff-ae29-6286770a9a04" },
     ];
 
-    const renderBadges = (list) => (
-        <div className="flex flex-wrap justify-center items-start w-full mt-2">
-            {list.map(([label, color, logo, logoColor]) => (
-                <img key={label} className="m-1" src={badge(label, color, logo, logoColor)} alt={label} />
-            ))}
-        </div>
-    );
-
     return (
         <>
             <Heading>Technical Skills</Heading>
-            <ul className=" tracking-tight text-sm md:text-base w-10/12 emoji-list">
-                <li className=" list-arrow text-sm md:text-base mt-4 leading-tight tracking-tight">
-                    I've worked with a wide variety of programming languages &amp; frameworks.
-                </li>
+            <ul className=" tracking-tight text-sm md:text-base w-11/12 md:w-10/12 emoji-list">
                 <li className=" list-arrow text-sm md:text-base mt-4 leading-tight tracking-tight">
                     <div> My areas of expertise are <strong className="text-ubt-gedit-orange">full-stack web development, data structures &amp; algorithms, and deep learning!</strong></div>
                 </li>
-                <li className=" list-arrow text-sm md:text-base mt-4 leading-tight tracking-tight">
-                    <div>Here are my most frequently used</div>
+                <li className=" list-arrow text-sm md:text-base mt-3 leading-tight tracking-tight">
+                    <div>Here's what I've used across my projects, internships and research</div>
                 </li>
             </ul>
-            <div className="w-full md:w-10/12 flex mt-4">
-                <div className=" text-sm text-center md:text-base w-1/2 font-bold">Languages</div>
-                <div className=" text-sm text-center md:text-base w-1/2 font-bold">Frameworks &amp; Libraries</div>
+            <div className="w-full px-3 md:px-6 mt-4 grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {categories.map(category => (
+                    <div key={category.title} className="rounded border border-gray-50 border-opacity-10 p-2">
+                        <div className="text-sm md:text-base font-bold mb-1 text-center">{category.title}</div>
+                        <div className="flex flex-wrap justify-center">
+                            {category.items.map(([label, color, logo, logoColor]) => (
+                                <img key={label} className="m-1 h-5" src={badge(label, color, logo, logoColor)} alt={label} title={label} />
+                            ))}
+                        </div>
+                    </div>
+                ))}
             </div>
-            <div className="w-full md:w-10/12 flex justify-center items-start font-bold text-center">
-                <div className="px-2 w-1/2">{renderBadges(languages)}</div>
-                <div className="px-2 w-1/2">{renderBadges(frameworks)}</div>
+            <div className="w-full px-3 md:px-6 mt-3">
+                <div className="rounded border border-gray-50 border-opacity-10 p-2">
+                    <div className="text-sm md:text-base font-bold mb-1 text-center">Core CS</div>
+                    <div className="flex flex-wrap justify-center text-xs">
+                        {core.map(topic => <span key={topic} className="m-1 px-2 py-0.5 rounded-full border border-ubb-orange text-ubt-gedit-orange">{topic}</span>)}
+                    </div>
+                </div>
             </div>
-            <div className=" text-sm text-center md:text-base font-bold mt-4">Databases &amp; Tools</div>
-            <div className="w-full md:w-8/12 px-2">{renderBadges(tools)}</div>
-            <ul className=" tracking-tight text-sm md:text-base w-10/12 emoji-list mt-2">
-                <li className=" list-arrow text-sm md:text-base mt-4 leading-tight tracking-tight">
-                    <span> And of course,</span> <img className=" inline ml-1" src="https://img.shields.io/badge/-Linux-0078D6?style=plastic&logo=linux&logoColor=ffffff" alt="linux" /> <span>!</span>
-                </li>
-            </ul>
 
-            <Heading>Problem Solving</Heading>
+            <div className="mt-6"><Heading>Problem Solving</Heading></div>
             <div className="w-full md:w-10/12 px-4 flex flex-wrap justify-center">
                 {profiles.map(profile => (
-                    <a key={profile.name} href={profile.link} target="_blank" rel="noreferrer" className="m-1.5 px-3 py-2 w-40 rounded border border-gray-50 border-opacity-10 hover:bg-gray-50 hover:bg-opacity-5 text-center">
+                    <a key={profile.name} href={profile.link} target="_blank" rel="noreferrer" className="m-1.5 px-3 py-2 w-36 md:w-40 rounded border border-gray-50 border-opacity-10 hover:bg-gray-50 hover:bg-opacity-5 text-center">
                         <div className="font-bold">{profile.name}</div>
                         <div className="text-xs text-ubt-gedit-orange">{profile.note}</div>
                     </a>

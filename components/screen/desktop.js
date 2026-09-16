@@ -369,7 +369,10 @@ export class Desktop extends Component {
             // tell childs that his app has been not minimised
             let minimized_windows = this.state.minimized_windows;
             minimized_windows[objId] = false;
-            this.setState({ minimized_windows: minimized_windows });
+            this.setState({ minimized_windows: minimized_windows }, () => {
+                // restored windows are full-screen on phones, so tuck the dock away again
+                if (window.innerWidth < 640) this.hideSideBar(objId, true);
+            });
             return;
         }
 

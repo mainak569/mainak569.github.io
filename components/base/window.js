@@ -4,6 +4,9 @@ import Settings from '../apps/settings';
 import ReactGA from 'react-ga4';
 import { displayTerminal } from '../apps/terminal'
 
+// phones get full-screen, non-draggable windows (like a mobile OS)
+const isMobile = () => typeof window !== "undefined" && window.innerWidth < 640;
+
 export class Window extends Component {
     constructor() {
         super();
@@ -30,22 +33,36 @@ export class Window extends Component {
         // google analytics
         ReactGA.send({ hitType: "pageview", page: `/${this.id}`, title: "Custom Title" });
 
-        // on window resize, resize boundary
-        window.addEventListener('resize', this.resizeBoundries);
+        // on window resize (or phone rotation), recompute size & boundary
+        window.addEventListener('resize', this.handleViewportResize);
     }
 
     componentWillUnmount() {
         ReactGA.send({ hitType: "pageview", page: "/desktop", title: "Custom Title" });
 
-        window.removeEventListener('resize', this.resizeBoundries);
+        window.removeEventListener('resize', this.handleViewportResize);
     }
 
     setDefaultWindowDimenstion = () => {
-        if (window.innerWidth < 640) {
-            this.setState({ height: 60, width: 85 }, this.resizeBoundries);
+        if (isMobile()) {
+            // fill the screen below the top bar
+            this.setState({ height: 100 - (32 / window.innerHeight) * 100, width: 100, maximized: true }, () => {
+                this.resizeBoundries();
+                if (this.props.hideSideBar) this.props.hideSideBar(this.id, true);
+            });
         }
         else {
             this.setState({ height: 85, width: 60 }, this.resizeBoundries);
+        }
+    }
+
+    handleViewportResize = () => {
+        if (isMobile()) {
+            const r = document.querySelector("#" + this.id);
+            if (r) r.style.transform = "translate(0px,0px)";
+            this.setDefaultWindowDimenstion();
+        } else {
+            this.resizeBoundries();
         }
     }
 
@@ -64,6 +81,7 @@ export class Window extends Component {
 
     changeCursorToMove = () => {
         this.focusWindow();
+        if (isMobile()) return;
         if (this.state.maximized) {
             this.restoreWindow();
         }
@@ -115,8 +133,16 @@ export class Window extends Component {
         var sidebBarApp = r.getBoundingClientRect();
 
         r = document.querySelector("#" + this.id);
-        // translate window to that position
-        r.style.transform = `translate(${posx}px,${sidebBarApp.y.toFixed(1) - 240}px) scale(0.2)`;
+        if (isMobile()) {
+            // shrink the full-screen window towards its dock icon
+            const rect = r.getBoundingClientRect();
+            const dx = (sidebBarApp.x + sidebBarApp.width / 2) - (rect.x + rect.width / 2);
+            const dy = (sidebBarApp.y + sidebBarApp.height / 2) - (rect.y + rect.height / 2);
+            r.style.transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(0.1)`;
+        } else {
+            // translate window to that position
+            r.style.transform = `translate(${posx}px,${sidebBarApp.y.toFixed(1) - 240}px) scale(0.2)`;
+        }
         this.props.hasMinimised(this.id);
     }
 
@@ -135,6 +161,7 @@ export class Window extends Component {
     }
 
     maximizeWindow = () => {
+        if (isMobile()) return; // always full-screen on phones
         if (this.state.maximized) {
             this.restoreWindow();
         }
@@ -166,15 +193,18 @@ export class Window extends Component {
                 handle=".bg-ub-window-title"
                 grid={[1, 1]}
                 scale={1}
+                disabled={isMobile()}
+                onMouseDown={isMobile() ? this.focusWindow : undefined}
                 onStart={this.changeCursorToMove}
                 onStop={this.changeCursorToDefault}
                 onDrag={this.checkOverlap}
                 allowAnyClick={false}
-                defaultPosition={{ x: this.startX, y: this.startY }}
+                defaultPosition={isMobile() ? { x: 0, y: 0 } : { x: this.startX, y: this.startY }}
                 bounds={{ left: 0, top: 0, right: this.state.parentSize.width, bottom: this.state.parentSize.height }}
             >
                 <div style={{ width: `${this.state.width}%`, height: `${this.state.height}%` }}
-                    className={this.state.cursorType + " " + (this.state.closed ? " closed-window " : "") + (this.state.maximized ? " duration-300 rounded-none" : " rounded-lg rounded-b-none") + (this.props.minimized ? " opacity-0 invisible duration-200 " : "") + (this.props.isFocused ? " z-30 " : " z-20 notFocused") + " opened-window overflow-hidden min-w-1/4 min-h-1/4 main-window absolute window-shadow border-black border-opacity-40 border border-t-0 flex flex-col"}
+                    onMouseDownCapture={this.props.isFocused ? null : this.focusWindow}
+                    className={this.state.cursorType + " " + (this.state.closed ? " closed-window " : "") + (this.state.maximized ? " duration-300 rounded-none" : " rounded-lg") + (this.props.minimized ? " opacity-0 invisible duration-200 " : "") + (this.props.isFocused ? " z-30 " : " z-20 notFocused") + " opened-window overflow-hidden min-w-1/4 min-h-1/4 main-window absolute window-shadow border-black border-opacity-40 border border-t-0 flex flex-col"}
                     id={this.id}
                 >
                     <WindowYBorder resize={this.handleHorizontalResize} />
@@ -186,6 +216,9 @@ export class Window extends Component {
                         : <WindowMainScreen screen={this.props.screen} title={this.props.title}
                             addFolder={this.props.id === "terminal" ? this.props.addFolder : null}
                             openApp={this.props.openApp} />)}
+                    {/* iframes (Spotify, VS Code, Chrome...) swallow clicks, so a background window gets a
+                        transparent shield that brings it to the front when clicked anywhere */}
+                    {this.props.isFocused ? null : <div className="absolute inset-x-0 bottom-0 z-40" style={{ top: "34px" }} onMouseDown={this.focusWindow}></div>}
                 </div>
             </Draggable >
         )
@@ -246,7 +279,7 @@ export function WindowEditButtons(props) {
             {
                 (props.isMaximised
                     ?
-                    <span className="mx-2 bg-white bg-opacity-0 hover:bg-opacity-10 rounded-full flex justify-center mt-1 h-5 w-5 items-center" onClick={props.maximize}>
+                    <span className="mx-2 bg-white bg-opacity-0 hover:bg-opacity-10 rounded-full hidden sm:flex justify-center mt-1 h-5 w-5 items-center" onClick={props.maximize}>
                         <img
                             src="./themes/Yaru/window/window-restore-symbolic.svg"
                             alt="ubuntu window restore"
@@ -254,7 +287,7 @@ export function WindowEditButtons(props) {
                         />
                     </span>
                     :
-                    <span className="mx-2 bg-white bg-opacity-0 hover:bg-opacity-10 rounded-full flex justify-center mt-1 h-5 w-5 items-center" onClick={props.maximize}>
+                    <span className="mx-2 bg-white bg-opacity-0 hover:bg-opacity-10 rounded-full hidden sm:flex justify-center mt-1 h-5 w-5 items-center" onClick={props.maximize}>
                         <img
                             src="./themes/Yaru/window/window-maximize-symbolic.svg"
                             alt="ubuntu window maximize"

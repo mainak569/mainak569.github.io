@@ -31,11 +31,8 @@ jobs:
       - name: Build static site
         run: npm run build
         env:
-          # Optional — set these as repository secrets to enable them
+          # Optional — set as a repository secret to enable Google Analytics
           NEXT_PUBLIC_TRACKING_ID: ${{ secrets.NEXT_PUBLIC_TRACKING_ID }}
-          NEXT_PUBLIC_SERVICE_ID: ${{ secrets.NEXT_PUBLIC_SERVICE_ID }}
-          NEXT_PUBLIC_TEMPLATE_ID: ${{ secrets.NEXT_PUBLIC_TEMPLATE_ID }}
-          NEXT_PUBLIC_USER_ID: ${{ secrets.NEXT_PUBLIC_USER_ID }}
 
       - run: touch out/.nojekyll
 
