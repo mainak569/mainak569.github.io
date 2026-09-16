@@ -1,0 +1,29 @@
+{
+  "name": "mainak-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "homepage": "https://mainak.me/",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "npx serve out"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@emailjs/browser": "^3.12.1",
+    "autoprefixer": "^10.4.20",
+    "expr-eval": "^2.0.2",
+    "jquery": "^3.7.1",
+    "next": "^14.2.35",
+    "postcss": "^8.4.49",
+    "prop-types": "^15.8.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-draggable": "^4.4.6",
+    "react-ga4": "^2.1.0",
+    "react-onclickoutside": "^6.13.1",
+    "tailwindcss": "^3.4.17"
+  }
+}
