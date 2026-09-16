@@ -45,7 +45,7 @@ export default function Status({ system }) {
   return (
     <div className="flex justify-center items-center">
       <span className="mx-1.5">
-        <WifiIcon on={system.wifi && system.online} className="inline status-symbol w-4 h-4" />
+        <WifiIcon on={system.online} className="inline status-symbol w-4 h-4" />
       </span>
       <span className="mx-1.5">
         <VolumeIcon level={system.volume} muted={system.muted} className="inline status-symbol w-4 h-4" />

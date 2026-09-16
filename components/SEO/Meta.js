@@ -59,9 +59,9 @@ export default function Meta() {
             <meta property="og:locale" content="en_IN" />
             <meta property="og:type" content="website" />
 
-            <link rel="icon" href="images/logos/fevicon.svg" type="image/svg+xml" />
-            <link rel="icon" href="images/logos/fevicon.png" type="image/png" />
-            <link rel="apple-touch-icon" href="images/logos/logo_192.png" />
+            <link rel="icon" href="images/logos/favicon-32.png" type="image/png" sizes="32x32" />
+            <link rel="icon" href="images/logos/favicon-512.png" type="image/png" sizes="512x512" />
+            <link rel="apple-touch-icon" href="images/logos/favicon-180.png" />
             <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet"></link>
         </Head>
     )

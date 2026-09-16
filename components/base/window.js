@@ -11,14 +11,13 @@ export class Window extends Component {
     constructor() {
         super();
         this.id = null;
-        this.startX = 60;
-        this.startY = 10;
         this.state = {
             cursorType: "cursor-default",
             width: 60,
             height: 85,
             closed: false,
             maximized: false,
+            pos: isMobile() ? { x: 0, y: 0 } : { x: 60, y: 10 },
             parentSize: {
                 height: 100,
                 width: 100
@@ -92,12 +91,69 @@ export class Window extends Component {
         this.setState({ cursorType: "cursor-default" })
     }
 
-    handleVerticleResize = () => {
-        this.setState({ height: this.state.height + 0.1 }, this.resizeBoundries);
+    handleDrag = (e, data) => {
+        this.setState({ pos: { x: data.x, y: data.y } });
+        this.checkOverlap();
     }
 
-    handleHorizontalResize = () => {
-        this.setState({ width: this.state.width + 0.1 }, this.resizeBoundries);
+    // ---------- resizing from any edge / corner ----------
+    startResize = (dir) => (e) => {
+        if (this.state.maximized || isMobile() || e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.focusWindow();
+
+        const el = document.getElementById(this.id);
+        const rect = el.getBoundingClientRect();
+        const parent = el.parentElement.getBoundingClientRect();
+        this.resizing = {
+            dir,
+            startX: e.clientX,
+            startY: e.clientY,
+            x: this.state.pos.x,
+            y: this.state.pos.y,
+            w: rect.width,
+            h: rect.height,
+            pw: parent.width,
+            ph: parent.height,
+        };
+        // pointer capture keeps the resize going even over iframes (Spotify, VS Code...)
+        e.currentTarget.setPointerCapture(e.pointerId);
+        document.body.style.userSelect = "none";
+    }
+
+    onResize = (e) => {
+        const r = this.resizing;
+        if (!r) return;
+        const dx = e.clientX - r.startX;
+        const dy = e.clientY - r.startY;
+        const minW = Math.min(Math.max(320, r.pw * 0.25), r.pw);
+        const minH = Math.min(Math.max(200, r.ph * 0.25), r.ph);
+        const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+
+        let { x, y, w, h } = r;
+        if (r.dir.includes("e")) w = clamp(r.w + dx, minW, r.pw - r.x);
+        if (r.dir.includes("s")) h = clamp(r.h + dy, minH, r.ph - r.y);
+        if (r.dir.includes("w")) {
+            x = clamp(r.x + dx, 0, r.x + r.w - minW);
+            w = r.w + (r.x - x);
+        }
+        if (r.dir.includes("n")) {
+            y = clamp(r.y + dy, 0, r.y + r.h - minH);
+            h = r.h + (r.y - y);
+        }
+        this.setState({ width: (w / r.pw) * 100, height: (h / r.ph) * 100, pos: { x, y } });
+    }
+
+    endResize = (e) => {
+        if (!this.resizing) return;
+        this.resizing = null;
+        if (e.currentTarget.hasPointerCapture && e.currentTarget.hasPointerCapture(e.pointerId)) {
+            e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+        document.body.style.userSelect = "";
+        this.resizeBoundries();
+        this.checkOverlap();
     }
 
     setWinowsPosition = () => {
@@ -148,12 +204,13 @@ export class Window extends Component {
 
     restoreWindow = () => {
         var r = document.querySelector("#" + this.id);
-        this.setDefaultWindowDimenstion();
-        // get previous position
-        let posx = r.style.getPropertyValue("--window-transform-x");
-        let posy = r.style.getPropertyValue("--window-transform-y");
-
-        r.style.transform = `translate(${posx},${posy})`;
+        // go back to the size the user had before maximizing
+        if (this.preMaximizeSize && !isMobile()) {
+            this.setState({ ...this.preMaximizeSize }, this.resizeBoundries);
+        } else {
+            this.setDefaultWindowDimenstion();
+        }
+        r.style.transform = `translate(${this.state.pos.x}px,${this.state.pos.y}px)`;
         setTimeout(() => {
             this.setState({ maximized: false });
             this.checkOverlap();
@@ -169,6 +226,7 @@ export class Window extends Component {
             this.focusWindow();
             var r = document.querySelector("#" + this.id);
             this.setWinowsPosition();
+            this.preMaximizeSize = { width: this.state.width, height: this.state.height };
             // translate window to maximize position
             r.style.transform = `translate(-1pt,-2pt)`;
             this.setState({ maximized: true, height: 96.3, width: 100.2 });
@@ -197,9 +255,9 @@ export class Window extends Component {
                 onMouseDown={isMobile() ? this.focusWindow : undefined}
                 onStart={this.changeCursorToMove}
                 onStop={this.changeCursorToDefault}
-                onDrag={this.checkOverlap}
+                onDrag={this.handleDrag}
                 allowAnyClick={false}
-                defaultPosition={isMobile() ? { x: 0, y: 0 } : { x: this.startX, y: this.startY }}
+                position={this.state.pos}
                 bounds={{ left: 0, top: 0, right: this.state.parentSize.width, bottom: this.state.parentSize.height }}
             >
                 <div style={{ width: `${this.state.width}%`, height: `${this.state.height}%` }}
@@ -207,8 +265,7 @@ export class Window extends Component {
                     className={this.state.cursorType + " " + (this.state.closed ? " closed-window " : "") + (this.state.maximized ? " duration-300 rounded-none" : " rounded-lg") + (this.props.minimized ? " opacity-0 invisible duration-200 " : "") + (this.props.isFocused ? " z-30 " : " z-20 notFocused") + " opened-window overflow-hidden min-w-1/4 min-h-1/4 main-window absolute window-shadow border-black border-opacity-40 border border-t-0 flex flex-col"}
                     id={this.id}
                 >
-                    <WindowYBorder resize={this.handleHorizontalResize} />
-                    <WindowXBorder resize={this.handleVerticleResize} />
+                    {this.state.maximized || isMobile() ? null : <ResizeHandles start={this.startResize} move={this.onResize} end={this.endResize} />}
                     <WindowTopBar title={this.props.title} />
                     <WindowEditButtons minimize={this.minimizeWindow} maximize={this.maximizeWindow} isMaximised={this.state.maximized} close={this.closeWindow} id={this.id} />
                     {(this.id === "settings"
@@ -236,33 +293,33 @@ export function WindowTopBar(props) {
     )
 }
 
-// Window's Borders
-export class WindowYBorder extends Component {
-    componentDidMount() {
-        this.trpImg = new Image(0, 0);
-        this.trpImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-        this.trpImg.style.opacity = 0;
-    }
-    render() {
-        return (
-            <div className=" window-y-border border-transparent border-1 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" onDragStart={(e) => { e.dataTransfer.setDragImage(this.trpImg, 0, 0) }} onDrag={this.props.resize}>
-            </div>
-        )
-    }
-}
+// Invisible grab areas along every edge and corner
+const RESIZE_HANDLES = [
+    { dir: "n", className: "top-0 left-3 right-3 h-1.5 cursor-ns-resize" },
+    { dir: "s", className: "bottom-0 left-3 right-3 h-1.5 cursor-ns-resize" },
+    { dir: "e", className: "right-0 top-3 bottom-3 w-1.5 cursor-ew-resize" },
+    { dir: "w", className: "left-0 top-3 bottom-3 w-1.5 cursor-ew-resize" },
+    { dir: "nw", className: "top-0 left-0 w-3 h-3 cursor-nwse-resize" },
+    { dir: "ne", className: "top-0 right-0 w-3 h-3 cursor-nesw-resize" },
+    { dir: "sw", className: "bottom-0 left-0 w-3 h-3 cursor-nesw-resize" },
+    { dir: "se", className: "bottom-0 right-0 w-3 h-3 cursor-nwse-resize" },
+];
 
-export class WindowXBorder extends Component {
-    componentDidMount() {
-        this.trpImg = new Image(0, 0);
-        this.trpImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-        this.trpImg.style.opacity = 0;
-    }
-    render() {
-        return (
-            <div className=" window-x-border border-transparent border-1 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" onDragStart={(e) => { e.dataTransfer.setDragImage(this.trpImg, 0, 0) }} onDrag={this.props.resize}>
-            </div>
-        )
-    }
+export function ResizeHandles(props) {
+    return (
+        <>
+            {RESIZE_HANDLES.map(handle => (
+                <div
+                    key={handle.dir}
+                    className={"absolute z-50 touch-none " + handle.className}
+                    onPointerDown={props.start(handle.dir)}
+                    onPointerMove={props.move}
+                    onPointerUp={props.end}
+                    onPointerCancel={props.end}
+                />
+            ))}
+        </>
+    )
 }
 
 // Window's Edit Buttons

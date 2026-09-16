@@ -89,7 +89,7 @@ export class StatusCard extends Component {
 	render() {
 		const { system, updateSystem } = this.props;
 		const rowClass = "w-72 py-1.5 flex items-center justify-center bg-ub-cool-grey hover:bg-ub-warm-grey hover:bg-opacity-20";
-		const wifiLabel = !system.wifi ? "Wi-Fi Off" : (system.online ? "OnePlus Nord CE3 Lite" : "Not Connected");
+		const wifiLabel = system.online ? "OnePlus Nord CE3 Lite" : "Not Connected";
 
 		return (
 			<div
@@ -127,22 +127,20 @@ export class StatusCard extends Component {
 				<div className="w-72 flex content-center justify-center">
 					<div className="w-2/4 border-black border-opacity-50 border-b my-2 border-solid" />
 				</div>
-				<div className={rowClass + " cursor-pointer"} onClick={() => updateSystem({ wifi: !system.wifi })} title="Toggle Wi-Fi">
+				<div className={rowClass}>
 					<div className="w-8">
-						<WifiIcon on={system.wifi && system.online} />
+						<WifiIcon on={system.online} />
 					</div>
 					<div className="w-2/3 flex items-center justify-between text-gray-400">
 						<span>{wifiLabel}</span>
-						<Toggle on={system.wifi} />
 					</div>
 				</div>
-				<div className={rowClass + " cursor-pointer"} onClick={() => updateSystem({ bluetooth: !system.bluetooth })} title="Toggle Bluetooth">
+				<div className={rowClass}>
 					<div className="w-8">
-						<img width="16px" height="16px" className={system.bluetooth ? "" : "opacity-50"} src="./themes/Yaru/status/bluetooth-symbolic.svg" alt="ubuntu bluetooth" />
+						<img width="16px" height="16px" src="./themes/Yaru/status/bluetooth-symbolic.svg" alt="ubuntu bluetooth" />
 					</div>
 					<div className="w-2/3 flex items-center justify-between text-gray-400">
-						<span>{system.bluetooth ? "Bluetooth On" : "Bluetooth Off"}</span>
-						<Toggle on={system.bluetooth} />
+						<span>Bluetooth Off</span>
 					</div>
 				</div>
 				<div className={rowClass}>
@@ -193,14 +191,6 @@ export class StatusCard extends Component {
 			</div>
 		);
 	}
-}
-
-function Toggle({ on }) {
-	return (
-		<span className={"relative inline-block w-7 h-4 rounded-full transition-colors duration-150 " + (on ? "bg-ub-orange" : "bg-gray-500")}>
-			<span className={"absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all duration-150 " + (on ? "left-3.5" : "left-0.5")} />
-		</span>
-	);
 }
 
 export default onClickOutside(StatusCard);

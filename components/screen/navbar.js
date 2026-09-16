@@ -11,8 +11,6 @@ export default class Navbar extends Component {
 			system: {
 				volume: 75,
 				muted: false,
-				wifi: true,
-				bluetooth: false,
 				online: true,
 				battery: { level: null, charging: false, chargingTime: Infinity, dischargingTime: Infinity },
 			},
@@ -24,7 +22,7 @@ export default class Navbar extends Component {
 		try {
 			saved = JSON.parse(localStorage.getItem('system-settings')) || {};
 		} catch (e) { }
-		this.updateSystem({ ...saved, online: navigator.onLine }, false);
+		this.updateSystem({ volume: saved.volume ?? 75, muted: !!saved.muted, online: navigator.onLine }, false);
 
 		window.addEventListener('online', this.handleOnline);
 		window.addEventListener('offline', this.handleOnline);
@@ -59,8 +57,8 @@ export default class Navbar extends Component {
 	updateSystem = (changes, persist = true) => {
 		this.setState(prev => ({ system: { ...prev.system, ...changes } }), () => {
 			if (!persist) return;
-			const { volume, muted, wifi, bluetooth } = this.state.system;
-			localStorage.setItem('system-settings', JSON.stringify({ volume, muted, wifi, bluetooth }));
+			const { volume, muted } = this.state.system;
+			localStorage.setItem('system-settings', JSON.stringify({ volume, muted }));
 		});
 	}
 
