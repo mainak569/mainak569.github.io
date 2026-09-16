@@ -22,7 +22,7 @@ const apps = [
     {
         id: "calc",
         title: "Calc",
-        icon: './themes/Yaru/apps/calc.svg',
+        icon: './themes/Yaru/apps/calc.png',
         disabled: false,
         favourite: true,
         desktop_shortcut: false,
