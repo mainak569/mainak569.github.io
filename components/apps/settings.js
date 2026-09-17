@@ -52,7 +52,7 @@ export function Settings(props) {
     const tabs = [["appearance", "Appearance"], ["about", "About"]];
 
     return (
-        <div className="w-full flex flex-grow z-20 max-h-full select-none bg-ub-cool-grey text-white">
+        <div className="w-full flex flex-grow min-h-0 z-20 select-none bg-ub-cool-grey text-white">
             <div className="flex flex-col w-28 sm:w-44 md:w-52 flex-shrink-0 bg-ub-grey border-r border-black py-2 text-sm md:text-base">
                 {tabs.map(([id, label]) => (
                     <button key={id} onClick={() => setTab(id)} className={"text-left px-3 md:px-4 py-2.5 focus:outline-none " + (tab === id ? "bg-ub-orange" : "hover:bg-white hover:bg-opacity-5")}>{label}</button>
@@ -72,7 +72,7 @@ export function Settings(props) {
                                 })
                             }
                         </div>
-                        <div className="px-4 md:px-8 py-6 border-t border-gray-900">
+                        <div className="px-4 md:px-8 pt-6 pb-10 border-t border-gray-900">
                             <div className="text-xs tracking-widest uppercase text-gray-400 mb-3">Accent colour</div>
                             <div className="flex flex-wrap gap-3 md:gap-4">
                                 {Object.entries(ACCENTS).map(([name, rgb]) => (
