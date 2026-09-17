@@ -51,9 +51,12 @@ export default class Ubuntu extends Component {
 			this.setTimeOutBootScreen();
 		}
 
-		// get shutdown state
-		let shut_down = localStorage.getItem('shut-down');
-		if (shut_down !== null && shut_down !== undefined && shut_down === 'true') this.shutDown();
+		// get shutdown state: only for this browser session, so a returning visitor
+		// never lands on a powered-off screen (older versions kept it in localStorage)
+		localStorage.removeItem('shut-down');
+		let shut_down = null;
+		try { shut_down = sessionStorage.getItem('shut-down'); } catch (e) { }
+		if (shut_down === 'true') this.shutDown();
 		else {
 			// Get previous lock screen state
 			let screen_locked = localStorage.getItem('screen-locked');
@@ -103,7 +106,7 @@ export default class Ubuntu extends Component {
 
 		document.getElementById('status-bar').blur();
 		this.setState({ shutDownScreen: true });
-		localStorage.setItem('shut-down', true);
+		try { sessionStorage.setItem('shut-down', true); } catch (e) { }
 	};
 
 	turnOn = () => {
@@ -111,7 +114,7 @@ export default class Ubuntu extends Component {
 
 		this.setState({ shutDownScreen: false, booting_screen: true });
 		this.setTimeOutBootScreen();
-		localStorage.setItem('shut-down', false);
+		try { sessionStorage.removeItem('shut-down'); } catch (e) { }
 	};
 
 	render() {
