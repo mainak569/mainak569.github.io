@@ -200,10 +200,13 @@ export function ShortcutSheet({ close }) {
 }
 
 export function SearchHint({ open }) {
+    // the OS is only known in the browser; rendering it during the static build would mismatch on Macs
+    const [mac, setMac] = React.useState(false);
+    React.useEffect(() => setMac(isMac()), []);
     return (
         <button onClick={open}
             className="hidden sm:block absolute bottom-4 right-4 z-10 px-4 py-2 rounded-full bg-ub-cool-grey bg-opacity-80 border border-white border-opacity-10 text-sm text-gray-200 hover:bg-opacity-100 shadow-lg focus:outline-none">
-            Press <kbd style={{ fontFamily: "'Ubuntu Mono', monospace" }}>{isMac() ? "⌘K" : "Ctrl+K"}</kbd> to search
+            Press <kbd style={{ fontFamily: "'Ubuntu Mono', monospace" }}>{mac ? "⌘K" : "Ctrl+K"}</kbd> to search
         </button>
     );
 }
