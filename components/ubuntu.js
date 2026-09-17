@@ -4,6 +4,7 @@ import Desktop from './screen/desktop';
 import LockScreen from './screen/lock_screen';
 import Navbar from './screen/navbar';
 import ReactGA from 'react-ga4';
+import { applyAccent, savedAccent } from './util components/accent';
 
 export default class Ubuntu extends Component {
 	constructor() {
@@ -32,6 +33,8 @@ export default class Ubuntu extends Component {
 	};
 
 	getLocalData = () => {
+		applyAccent(savedAccent());
+
 		// Get Previously selected Background Image
 		let bg_image_name = localStorage.getItem('bg-image');
 		if (bg_image_name !== null && bg_image_name !== undefined) {

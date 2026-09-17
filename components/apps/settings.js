@@ -1,5 +1,6 @@
 import React from 'react';
 import $ from 'jquery';
+import { ACCENTS, applyAccent, savedAccent, DEFAULT_ACCENT } from '../util components/accent';
 
 export function Settings(props) {
     const wallpapers = {
@@ -21,6 +22,22 @@ export function Settings(props) {
 
     const [tab, setTab] = React.useState("appearance");
     const [client, setClient] = React.useState({});
+    const [accent, setAccent] = React.useState(DEFAULT_ACCENT);
+
+    React.useEffect(() => setAccent(savedAccent()), []);
+
+    const chooseAccent = (name) => {
+        setAccent(name);
+        applyAccent(name);
+        try { localStorage.setItem("accent-color", name); } catch (e) { }
+    };
+
+    const resetDesktop = () => {
+        // everything the desktop remembers, except whether the boot animation was already seen
+        ["bg-image", "accent-color", "brightness-level", "new_folders", "terminal-theme", "trash-empty", "frequentApps", "about-section", "screen-locked", "shut-down"]
+            .forEach(key => { try { localStorage.removeItem(key); } catch (e) { } });
+        window.location.reload();
+    };
 
     React.useEffect(() => {
         const ua = navigator.userAgent;
@@ -50,10 +67,23 @@ export function Settings(props) {
                             {
                                 Object.keys(wallpapers).map((name, index) => {
                                     return (
-                                        <div key={index} tabIndex="1" onFocus={changeBackgroundImage} data-path={name} className={((name === props.currBgImgName) ? " border-yellow-700 " : " border-transparent ") + " md:px-28 md:py-20 md:m-4 m-2 px-14 py-10 outline-none border-4 border-opacity-80"} style={{ backgroundImage: `url(${wallpapers[name]})`, backgroundSize: "cover", backgroundRepeat: "no-repeat", backgroundPosition: "center center" }}></div>
+                                        <div key={index} tabIndex="1" onFocus={changeBackgroundImage} data-path={name} className={((name === props.currBgImgName) ? " border-ubb-orange " : " border-transparent ") + " md:px-28 md:py-20 md:m-4 m-2 px-14 py-10 outline-none border-4 border-opacity-80"} style={{ backgroundImage: `url(${wallpapers[name]})`, backgroundSize: "cover", backgroundRepeat: "no-repeat", backgroundPosition: "center center" }}></div>
                                     );
                                 })
                             }
+                        </div>
+                        <div className="px-4 md:px-8 py-6 border-t border-gray-900">
+                            <div className="text-xs tracking-widest uppercase text-gray-400 mb-3">Accent colour</div>
+                            <div className="flex flex-wrap gap-3 md:gap-4">
+                                {Object.entries(ACCENTS).map(([name, rgb]) => (
+                                    <button key={name} onClick={() => chooseAccent(name)} title={name} aria-label={`${name} accent`}
+                                        className={"w-10 h-10 md:w-12 md:h-12 rounded-full focus:outline-none transition-transform hover:scale-105 " + (accent === name ? "ring-2 ring-white ring-offset-2 ring-offset-gray-800" : "")}
+                                        style={{ background: `rgb(${rgb})` }}></button>
+                                ))}
+                            </div>
+                            <button onClick={resetDesktop} className="mt-6 px-4 py-2 rounded bg-black bg-opacity-50 border border-black hover:bg-opacity-80 focus:outline-none">
+                                Reset desktop to defaults
+                            </button>
                         </div>
                     </>
                 ) : (

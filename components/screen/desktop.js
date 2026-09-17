@@ -5,11 +5,24 @@ import apps from '../../apps.config';
 import Window from '../base/window';
 import UbuntuApp from '../base/ubuntu_app';
 import AllApplications from '../screen/all-applications'
+import { displayEmptyFolder } from '../apps/files';
 import { CommandPalette, ShortcutSheet, SearchHint, Notification, modKey } from './command-palette';
 import DesktopMenu from '../context menus/desktop-menu';
 import DefaultMenu from '../context menus/default';
 import $ from 'jquery';
 import ReactGA from 'react-ga4';
+
+// desktop folders made with "New Folder" or mkdir; ids must be valid in "#id" selectors
+const folderId = (name) => "new-folder-" + (name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "untitled");
+const folderApp = (name) => ({
+    id: folderId(name),
+    title: name,
+    icon: './themes/Yaru/system/folder.png',
+    disabled: false,
+    favourite: false,
+    desktop_shortcut: true,
+    screen: displayEmptyFolder(name),
+});
 
 export class Desktop extends Component {
     constructor() {
@@ -65,15 +78,9 @@ export class Desktop extends Component {
         else {
             new_folders = JSON.parse(new_folders);
             new_folders.forEach(folder => {
-                apps.push({
-                    id: `new-folder-${folder.id}`,
-                    title: folder.name,
-                    icon: './themes/Yaru/system/folder.png',
-                    disabled: true,
-                    favourite: false,
-                    desktop_shortcut: true,
-                    screen: () => { },
-                });
+                // older saves stored ids that already start with "new-folder-" and may contain characters
+                // that break the "#id" selectors windows rely on, so normalise them here
+                if (!apps.some(app => app.id === folderId(folder.name))) apps.push(folderApp(folder.name));
             });
             this.updateAppsData();
         }
@@ -218,11 +225,11 @@ export class Desktop extends Component {
         apps.forEach((app) => {
             focused_windows = {
                 ...focused_windows,
-                [app.id]: ((this.state.focused_windows[app.id] !== undefined || this.state.focused_windows[app.id] !== null) ? this.state.focused_windows[app.id] : false),
+                [app.id]: (this.state.focused_windows[app.id] ?? false),
             };
             minimized_windows = {
                 ...minimized_windows,
-                [app.id]: ((this.state.minimized_windows[app.id] !== undefined || this.state.minimized_windows[app.id] !== null) ? this.state.minimized_windows[app.id] : false)
+                [app.id]: (this.state.minimized_windows[app.id] ?? false)
             };
             disabled_apps = {
                 ...disabled_apps,
@@ -230,7 +237,7 @@ export class Desktop extends Component {
             };
             closed_windows = {
                 ...closed_windows,
-                [app.id]: ((this.state.closed_windows[app.id] !== undefined || this.state.closed_windows[app.id] !== null) ? this.state.closed_windows[app.id] : true)
+                [app.id]: (this.state.closed_windows[app.id] ?? true)
             };
             favourite_apps = {
                 ...favourite_apps,
@@ -473,19 +480,16 @@ export class Desktop extends Component {
 
     addToDesktop = (folder_name) => {
         folder_name = folder_name.trim();
-        let folder_id = folder_name.replace(/\s+/g, '-').toLowerCase();
-        apps.push({
-            id: `new-folder-${folder_id}`,
-            title: folder_name,
-            icon: './themes/Yaru/system/folder.png',
-            disabled: true,
-            favourite: false,
-            desktop_shortcut: true,
-            screen: () => { },
-        });
+        if (!folder_name) return;
+        if (apps.some(app => app.id === folderId(folder_name))) {
+            // same name already on the desktop: just open it
+            this.setState({ showNameBar: false }, () => this.openApp(folderId(folder_name)));
+            return;
+        }
+        apps.push(folderApp(folder_name));
         // store in local storage
-        var new_folders = JSON.parse(localStorage.getItem('new_folders'));
-        new_folders.push({ id: `new-folder-${folder_id}`, name: folder_name });
+        var new_folders = JSON.parse(localStorage.getItem('new_folders')) || [];
+        new_folders.push({ id: folderId(folder_name), name: folder_name });
         localStorage.setItem("new_folders", JSON.stringify(new_folders));
 
         this.setState({ showNameBar: false }, this.updateAppsData);
@@ -520,6 +524,7 @@ export class Desktop extends Component {
     renderNameBar = () => {
         let addFolder = () => {
             let folder_name = document.getElementById("folder-name-input").value;
+            if (!folder_name.trim()) return;
             this.addToDesktop(folder_name);
         }
 
@@ -531,7 +536,11 @@ export class Desktop extends Component {
             <div className="absolute rounded-md top-1/2 left-1/2 text-center text-white font-light text-sm bg-ub-cool-grey transform -translate-y-1/2 -translate-x-1/2 sm:w-96 w-3/4 z-50">
                 <div className="w-full flex flex-col justify-around items-start pl-6 pb-8 pt-6">
                     <span>New folder name</span>
-                    <input className="outline-none mt-5 px-1 w-10/12  context-menu-bg border-2 border-yellow-700 rounded py-0.5" id="folder-name-input" type="text" autoComplete="off" spellCheck="false" autoFocus={true} />
+                    <input className="outline-none mt-5 px-1 w-10/12  context-menu-bg border-2 border-ubb-orange rounded py-0.5" id="folder-name-input" type="text"
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") addFolder();
+                            else if (e.key === "Escape") removeCard();
+                        }} autoComplete="off" spellCheck="false" autoFocus={true} />
                 </div>
                 <div className="flex">
                     <div onClick={addFolder} className="w-1/2 px-4 py-2 border border-gray-900 border-opacity-50 border-r-0 hover:bg-ub-warm-grey hover:bg-opacity-10 hover:border-opacity-50">Create</div>

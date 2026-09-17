@@ -199,7 +199,8 @@ export class Files extends Component {
                     <div className="flex items-center min-w-0">
                         {navBtn(this.goBack, !!(back.length || openFile), "Back", "‹")}
                         {navBtn(this.goForward, !!forward.length && !openFile, "Forward", "›")}
-                        {navBtn(this.goUp, path !== HOME || !!openFile, "Up", "↑")}
+                        {navBtn(() => this.navigate(HOME), path !== HOME || !!openFile, "Home",
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.5l-7 6.2.7.8L3 7.4V14h4v-4h2v4h4V7.4l1.3 1.1.7-.8z" /></svg>)}
                         <div className="ml-1 min-w-0">{this.renderBreadcrumbs()}</div>
                     </div>
                     <div className="flex items-center flex-shrink-0">
@@ -236,6 +237,28 @@ export class Files extends Component {
 }
 
 export default Files;
+
+// a folder created on the desktop: always empty, since the portfolio's filesystem is read-only
+export function EmptyFolder({ name }) {
+    return (
+        <div className="w-full h-full flex flex-col bg-ub-cool-grey text-white select-none">
+            <div className="flex items-center justify-between w-full bg-ub-warm-grey bg-opacity-40 text-sm px-3 py-1.5 border-b border-black border-opacity-50">
+                <div className="flex items-center min-w-0">
+                    <span className="text-gray-300 mr-1">Desktop /</span>
+                    <span className="px-2.5 py-1 rounded bg-black bg-opacity-30 font-medium truncate">{name}</span>
+                </div>
+                <span className="text-gray-300 whitespace-nowrap ml-2">0 items</span>
+            </div>
+            <div className="flex-grow flex flex-col items-center justify-center text-center px-4">
+                <img className="w-20 h-20 opacity-40" src="./themes/Yaru/system/folder.png" alt="" />
+                <div className="mt-4 text-lg text-gray-300">Folder is empty</div>
+                <div className="mt-1 text-sm text-gray-400">Portfolio files are read-only — but the folder is yours to keep.</div>
+            </div>
+        </div>
+    );
+}
+
+export const displayEmptyFolder = (name) => () => <EmptyFolder name={name} />;
 
 export const displayFiles = () => {
     return <Files />;

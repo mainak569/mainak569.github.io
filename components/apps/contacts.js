@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 const icon = (slug, color) => `https://cdn.simpleicons.org/${slug}/${color}`;
 
 const MailIcon = () => (
-    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="#E95420" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></svg>
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="rgb(var(--accent))" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></svg>
 );
 const PhoneIcon = () => (
     <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="#4E9A06" strokeWidth="2"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" /></svg>

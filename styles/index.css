@@ -1,3 +1,8 @@
+/* Ubuntu accent colour as space-separated RGB, set from Settings → Appearance */
+:root {
+    --accent: 233 84 32;
+}
+
 html, body {
     height: 100%;
     /* the page is a fixed "desktop": never let window animations scroll it */

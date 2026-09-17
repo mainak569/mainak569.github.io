@@ -7,7 +7,8 @@ module.exports = {
       'ub-grey': '#111111',
       'ub-warm-grey': "#AEA79F",
       'ub-cool-grey': "#333333",
-      'ub-orange': "#E95420",
+      // accent colour is switchable in Settings → Appearance (see styles/index.css)
+      'ub-orange': 'rgb(var(--accent) / <alpha-value>)',
       'ub-lite-abrgn': "#77216F",
       'ub-med-abrgn': "#5E2750",
       'ub-drk-abrgn': "#2C001E",
@@ -30,7 +31,7 @@ module.exports = {
     borderColor: theme => ({
       ...theme('colors'),
       DEFAULT: theme('colors.gray.300', 'currentColor'),
-      'ubb-orange': '#E95420'
+      'ubb-orange': 'rgb(var(--accent) / <alpha-value>)'
     }),
     minWidth: {
       '0': '0',

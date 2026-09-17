@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { createPortal } from 'react-dom';
 import Draggable from 'react-draggable';
 import Settings from '../apps/settings';
 import ReactGA from 'react-ga4';
@@ -6,6 +7,38 @@ import { displayTerminal } from '../apps/terminal'
 
 // phones get full-screen, non-draggable windows (like a mobile OS)
 const isMobile = () => typeof window !== "undefined" && window.innerWidth < 640;
+
+// windows live in a layer that starts below the top bar
+const TOP_BAR = 32;
+const SNAP_EDGE = 12;   // how close the pointer must get to a screen edge
+const SNAP_CORNER = 90; // how far along an edge still counts as its corner
+
+// which snap zone (if any) the pointer is in while dragging
+const snapZone = (x, y) => {
+    const w = window.innerWidth, h = window.innerHeight;
+    const top = y <= TOP_BAR + SNAP_EDGE;
+    const bottom = y >= h - SNAP_CORNER;
+    if (x <= SNAP_EDGE) return top || y <= TOP_BAR + SNAP_CORNER ? "top-left" : bottom ? "bottom-left" : "left";
+    if (x >= w - SNAP_EDGE) return top || y <= TOP_BAR + SNAP_CORNER ? "top-right" : bottom ? "bottom-right" : "right";
+    if (top) return x <= SNAP_CORNER ? "top-left" : x >= w - SNAP_CORNER ? "top-right" : "top";
+    return null;
+};
+
+// the area a zone covers, in the window layer's coordinates (px)
+const snapRect = (zone) => {
+    const w = window.innerWidth, h = window.innerHeight - TOP_BAR;
+    const halfW = w / 2, halfH = h / 2;
+    switch (zone) {
+        case "top": return { x: 0, y: 0, w, h };
+        case "left": return { x: 0, y: 0, w: halfW, h };
+        case "right": return { x: halfW, y: 0, w: halfW, h };
+        case "top-left": return { x: 0, y: 0, w: halfW, h: halfH };
+        case "top-right": return { x: halfW, y: 0, w: halfW, h: halfH };
+        case "bottom-left": return { x: 0, y: halfH, w: halfW, h: halfH };
+        case "bottom-right": return { x: halfW, y: halfH, w: halfW, h: halfH };
+        default: return null;
+    }
+};
 
 export class Window extends Component {
     constructor() {
@@ -17,6 +50,7 @@ export class Window extends Component {
             height: 85,
             closed: false,
             maximized: false,
+            snapPreview: null,
             pos: isMobile() ? { x: 0, y: 0 } : { x: 60, y: 10 },
             parentSize: {
                 height: 100,
@@ -88,12 +122,49 @@ export class Window extends Component {
     }
 
     changeCursorToDefault = () => {
-        this.setState({ cursorType: "cursor-default" })
+        const zone = this.state.snapPreview;
+        this.setState({ cursorType: "cursor-default", snapPreview: null });
+        if (zone) this.snapTo(zone);
     }
 
     handleDrag = (e, data) => {
-        this.setState({ pos: { x: data.x, y: data.y } });
+        // dragging a snapped window away gives it back its previous size
+        if (this.preSnapSize) {
+            this.setState({ ...this.preSnapSize }, this.resizeBoundries);
+            this.preSnapSize = null;
+        }
+        const point = e.touches && e.touches[0] ? e.touches[0] : e;
+        const zone = typeof point.clientX === "number" ? snapZone(point.clientX, point.clientY) : null;
+        this.setState({ pos: { x: data.x, y: data.y }, snapPreview: zone });
         this.checkOverlap();
+    }
+
+    snapTo = (zone) => {
+        if (zone === "top") {
+            if (!this.state.maximized) this.maximizeWindow();
+            return;
+        }
+        const rect = snapRect(zone);
+        if (!this.preSnapSize) this.preSnapSize = { width: this.state.width, height: this.state.height };
+        // the window layer is as tall as the viewport, so percentages are of innerHeight
+        this.setState({
+            width: (rect.w / window.innerWidth) * 100,
+            height: (rect.h / window.innerHeight) * 100,
+            pos: { x: rect.x, y: rect.y },
+        }, () => {
+            this.resizeBoundries();
+            this.checkOverlap();
+        });
+    }
+
+    renderSnapPreview = () => {
+        const rect = snapRect(this.state.snapPreview);
+        if (!rect || typeof document === "undefined") return null;
+        return createPortal(
+            <div className="fixed pointer-events-none rounded-lg border-2 border-ubb-orange bg-ub-orange bg-opacity-20 transition-all duration-150"
+                style={{ left: rect.x + 4, top: rect.y + TOP_BAR + 4, width: rect.w - 8, height: rect.h - 8, zIndex: 45 }} />,
+            document.body
+        );
     }
 
     // ---------- resizing from any edge / corner ----------
@@ -210,7 +281,10 @@ export class Window extends Component {
         } else {
             this.setDefaultWindowDimenstion();
         }
-        r.style.transform = `translate(${this.state.pos.x}px,${this.state.pos.y}px)`;
+        const pos = this.preMaximizePos || this.state.pos;
+        this.preMaximizePos = null;
+        r.style.transform = `translate(${pos.x}px,${pos.y}px)`;
+        this.setState({ pos });
         setTimeout(() => {
             this.setState({ maximized: false });
             this.checkOverlap();
@@ -226,10 +300,15 @@ export class Window extends Component {
             this.focusWindow();
             var r = document.querySelector("#" + this.id);
             this.setWinowsPosition();
-            this.preMaximizeSize = { width: this.state.width, height: this.state.height };
-            // translate window to maximize position
-            r.style.transform = `translate(-1pt,-2pt)`;
-            this.setState({ maximized: true, height: 96.3, width: 100.2 });
+            // a snapped window restores to its size from before the snap
+            this.preMaximizeSize = this.preSnapSize || { width: this.state.width, height: this.state.height };
+            this.preSnapSize = null;
+            // translate window to maximize position; kept in state too, so react-draggable
+            // doesn't put the old position back when a drag (e.g. snapping to the top) ends
+            this.preMaximizePos = this.state.pos;
+            const pos = { x: -1.33, y: -2.67 };
+            r.style.transform = `translate(${pos.x}px,${pos.y}px)`;
+            this.setState({ maximized: true, height: 96.3, width: 100.2, pos });
             this.props.hideSideBar(this.id, true);
         }
     }
@@ -246,6 +325,7 @@ export class Window extends Component {
 
     render() {
         return (
+            <>
             <Draggable
                 axis="both"
                 handle=".bg-ub-window-title"
@@ -266,7 +346,7 @@ export class Window extends Component {
                     id={this.id}
                 >
                     {this.state.maximized || isMobile() ? null : <ResizeHandles start={this.startResize} move={this.onResize} end={this.endResize} />}
-                    <WindowTopBar title={this.props.title} />
+                    <WindowTopBar title={this.props.title} onDoubleClick={this.maximizeWindow} />
                     <WindowEditButtons minimize={this.minimizeWindow} maximize={this.maximizeWindow} isMaximised={this.state.maximized} close={this.closeWindow} id={this.id} />
                     {(this.id === "settings"
                         ? <Settings changeBackgroundImage={this.props.changeBackgroundImage} currBgImgName={this.props.bg_image_name} />
@@ -278,6 +358,8 @@ export class Window extends Component {
                     {this.props.isFocused ? null : <div className="absolute inset-x-0 bottom-0 z-40" style={{ top: "34px" }} onMouseDown={this.focusWindow}></div>}
                 </div>
             </Draggable >
+            {this.renderSnapPreview()}
+            </>
         )
     }
 }
@@ -287,7 +369,7 @@ export default Window
 // Window's title bar
 export function WindowTopBar(props) {
     return (
-        <div className={" relative bg-ub-window-title border-t-2 border-white border-opacity-5 py-1.5 px-3 text-white w-full select-none rounded-b-none"}>
+        <div onDoubleClick={props.onDoubleClick} className={" relative bg-ub-window-title border-t-2 border-white border-opacity-5 py-1.5 px-3 text-white w-full select-none rounded-b-none"}>
             <div className="flex justify-center text-sm font-bold">{props.title}</div>
         </div>
     )
