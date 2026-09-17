@@ -22,6 +22,15 @@ const score = (text, query) => {
     return Math.max(1, 500 - gaps * 10);
 };
 
+const LINK_ICONS = {
+    GitHub: "./themes/Yaru/apps/github.png",
+    LinkedIn: "./themes/Yaru/apps/linkedin.svg",
+    LeetCode: "./themes/Yaru/apps/leetcode.svg",
+    CodeChef: "./themes/Yaru/apps/codechef.svg",
+    Codeforces: "./themes/Yaru/apps/codeforces.svg",
+    GeeksforGeeks: "./themes/Yaru/apps/geeksforgeeks.svg",
+};
+
 const KIND_ORDER = { app: 0, project: 1, link: 2, action: 3 };
 
 export class CommandPalette extends Component {
@@ -48,8 +57,10 @@ export class CommandPalette extends Component {
             id: `project-${p.name}`, kind: "project", title: p.name, subtitle: p.tagline, keywords: p.stack, icon: "./themes/Yaru/system/folder.png",
             run: () => window.open(p.demo || p.github, "_blank", "noopener"),
         }));
-        const linkItems = SOCIAL.map(([name, href, label]) => ({
-            id: `link-${name}`, kind: "link", title: name, subtitle: label, icon: "./themes/Yaru/status/external-link.svg",
+        // GitHub, LinkedIn and LeetCode are already desktop apps, so skip their duplicate link rows
+        const appTitles = new Set(appItems.map(item => item.title.toLowerCase()));
+        const linkItems = SOCIAL.filter(([name]) => !appTitles.has(name.toLowerCase())).map(([name, href, label]) => ({
+            id: `link-${name}`, kind: "link", title: name, subtitle: label, icon: LINK_ICONS[name] || "./themes/Yaru/status/external-link.svg",
             run: () => window.open(href, "_blank", "noopener"),
         }));
         const actionItems = [
