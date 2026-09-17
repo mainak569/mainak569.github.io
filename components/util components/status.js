@@ -1,23 +1,6 @@
 import React from "react";
 import SmallArrow from "./small_arrow";
 
-export function VolumeIcon({ level, muted, className = "" }) {
-  const v = muted ? 0 : Number(level);
-  return (
-    <svg className={className} width="16" height="16" viewBox="0 0 16 16" fill="#fff" aria-label="volume">
-      <path d="M8 1.333L4.5 5H1.87S1 5.893 1 8.001C1 10.11 1.87 11 1.87 11H4.5L8 14.667z" />
-      {v === 0 ? (
-        <path d="M10.5 5.5l1.75 1.75L14 5.5l.75.75-1.75 1.75 1.75 1.75-.75.75-1.75-1.75-1.75 1.75-.75-.75 1.75-1.75-1.75-1.75z" />
-      ) : (
-        <>
-          <path opacity={v > 0 ? 1 : 0.35} d="M10.524 4.926l-.707.707.354.354a2.999 2.999 0 0 1 0 4.242l-.354.353.707.707.354-.353a4 4 0 0 0 0-5.656z" />
-          <path opacity={v > 66 ? 1 : 0.35} d="M12.645 2.805l-.707.707.354.353a5.999 5.999 0 0 1 0 8.485l-.354.353.707.707.354-.353a7 7 0 0 0 0-9.899z" />
-        </>
-      )}
-    </svg>
-  );
-}
-
 export function WifiIcon({ on, className = "" }) {
   return (
     <svg className={className} width="16" height="16" viewBox="0 0 16 16" aria-label="wifi">
@@ -46,9 +29,6 @@ export default function Status({ system }) {
     <div className="flex justify-center items-center">
       <span className="mx-1.5">
         <WifiIcon on={system.online} className="inline status-symbol w-4 h-4" />
-      </span>
-      <span className="mx-1.5">
-        <VolumeIcon level={system.volume} muted={system.muted} className="inline status-symbol w-4 h-4" />
       </span>
       <span className="mx-1.5 flex items-center">
         <BatteryIcon level={system.battery.level} charging={system.battery.charging} className="inline status-symbol w-4 h-4" />

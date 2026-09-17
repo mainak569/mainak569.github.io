@@ -62,7 +62,7 @@ export default function Meta() {
             <link rel="icon" href="images/logos/favicon-32.png" type="image/png" sizes="32x32" />
             <link rel="icon" href="images/logos/favicon-512.png" type="image/png" sizes="512x512" />
             <link rel="apple-touch-icon" href="images/logos/favicon-180.png" />
-            <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet"></link>
+            <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet"></link>
         </Head>
     )
 }

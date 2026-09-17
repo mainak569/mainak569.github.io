@@ -5,6 +5,7 @@ import apps from '../../apps.config';
 import Window from '../base/window';
 import UbuntuApp from '../base/ubuntu_app';
 import AllApplications from '../screen/all-applications'
+import { CommandPalette, ShortcutSheet, SearchHint, Notification, modKey } from './command-palette';
 import DesktopMenu from '../context menus/desktop-menu';
 import DefaultMenu from '../context menus/default';
 import $ from 'jquery';
@@ -20,6 +21,7 @@ export class Desktop extends Component {
             focused_windows: {},
             closed_windows: {},
             allAppsView: false,
+            allAppsCategory: 0,
             overlapped_windows: {},
             disabled_apps: {},
             favourite_apps: {},
@@ -31,6 +33,9 @@ export class Desktop extends Component {
                 default: false,
             },
             showNameBar: false,
+            palette: false,
+            shortcuts: false,
+            notification: null,
         }
     }
 
@@ -46,6 +51,10 @@ export class Desktop extends Component {
 
     componentWillUnmount() {
         this.removeContextListeners();
+        window.removeEventListener("toggle-activities", this.showFrequentApps);
+        document.removeEventListener("keydown", this.handleGlobalKeys);
+        clearTimeout(this.welcomeTimer);
+        clearTimeout(this.notificationTimer);
     }
 
     checkForNewFolders = () => {
@@ -74,6 +83,16 @@ export class Desktop extends Component {
         document.getElementById("open-settings").addEventListener("click", () => {
             this.openApp("settings");
         });
+        // "Activities" in the top bar lives outside the desktop, so it talks to us through an event
+        window.addEventListener("toggle-activities", this.showFrequentApps);
+        document.addEventListener("keydown", this.handleGlobalKeys);
+
+        // greet once per browser session, after the boot screen is gone
+        let greeted = false;
+        try { greeted = sessionStorage.getItem("welcomed") === "1"; sessionStorage.setItem("welcomed", "1"); } catch (e) { }
+        if (!greeted) {
+            this.welcomeTimer = setTimeout(() => this.notify("Welcome — Mainak Das", `Press ${modKey()}K to search, or ? for the shortcut sheet.`), 3000);
+        }
     }
 
     setContextListeners = () => {
@@ -472,7 +491,31 @@ export class Desktop extends Component {
         this.setState({ showNameBar: false }, this.updateAppsData);
     }
 
-    showAllApps = () => { this.setState({ allAppsView: !this.state.allAppsView }) }
+    handleGlobalKeys = (e) => {
+        if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k") {
+            e.preventDefault();
+            this.setState(prev => ({ palette: !prev.palette, shortcuts: false }));
+            return;
+        }
+        const target = e.target;
+        const typing = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+        if (e.key === "?" && !typing && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            this.setState(prev => ({ shortcuts: !prev.shortcuts, palette: false }));
+        } else if (e.key === "Escape" && this.state.shortcuts) {
+            this.setState({ shortcuts: false });
+        }
+    }
+
+    notify = (title, body, icon = "./themes/Yaru/apps/bash.png") => {
+        clearTimeout(this.notificationTimer);
+        this.setState({ notification: { title, body, icon } });
+        this.notificationTimer = setTimeout(() => this.setState({ notification: null }), 6000);
+    }
+
+    showAllApps = () => { this.setState({ allAppsView: !this.state.allAppsView, allAppsCategory: 0 }) }
+
+    showFrequentApps = () => { this.setState({ allAppsView: !this.state.allAppsView, allAppsCategory: 1 }) }
 
     renderNameBar = () => {
         let addFolder = () => {
@@ -537,8 +580,27 @@ export class Desktop extends Component {
                     )
                 }
 
+                <SearchHint open={() => this.setState({ palette: true })} />
+
+                {this.state.palette ?
+                    <CommandPalette apps={apps} openApp={this.openApp}
+                        close={() => this.setState({ palette: false })}
+                        actions={{
+                            notify: this.notify,
+                            showApps: () => this.setState({ allAppsView: true, allAppsCategory: 0 }),
+                            showShortcuts: () => this.setState({ shortcuts: true }),
+                        }} /> : null}
+
+                {this.state.shortcuts ? <ShortcutSheet close={() => this.setState({ shortcuts: false })} /> : null}
+
+                {this.state.notification ?
+                    <Notification {...this.state.notification} close={() => this.setState({ notification: null })} /> : null}
+
                 { this.state.allAppsView ?
                     <AllApplications apps={apps}
+                        key={this.state.allAppsCategory}
+                        initialCategory={this.state.allAppsCategory}
+                        close={() => this.setState({ allAppsView: false })}
                         recentApps={this.app_stack}
                         openApp={this.openApp} /> : null}
 

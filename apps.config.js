@@ -8,6 +8,8 @@ import { displayGedit } from './components/apps/gedit';
 import { displayAboutMainak } from './components/apps/mainak';
 import { displayTerminalCalc } from './components/apps/calc';
 import { displayContacts } from './components/apps/contacts';
+import { displayFiles } from './components/apps/files';
+import { displaySystemMonitor } from './components/apps/system-monitor';
 
 const apps = [
     {
@@ -38,6 +40,15 @@ const apps = [
         screen: displayAboutMainak,
     },
     {
+        id: "files",
+        title: "Files",
+        icon: './themes/Yaru/apps/files.svg',
+        disabled: false,
+        favourite: true,
+        desktop_shortcut: true,
+        screen: displayFiles,
+    },
+    {
         id: "vscode",
         title: "Visual Studio Code",
         icon: './themes/Yaru/apps/vscode.png',
@@ -63,6 +74,15 @@ const apps = [
         favourite: true,
         desktop_shortcut: false,
         screen: displaySpotify,
+    },
+    {
+        id: "system-monitor",
+        title: "System Monitor",
+        icon: './themes/Yaru/apps/system-monitor.svg',
+        disabled: false,
+        favourite: false,
+        desktop_shortcut: false,
+        screen: displaySystemMonitor,
     },
     {
         id: "settings",

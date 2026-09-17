@@ -2,12 +2,12 @@ import React from 'react';
 import UbuntuApp from '../base/ubuntu_app';
 
 export class AllApplications extends React.Component {
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
         this.state = {
             query: "",
             apps: [],
-            category: 0 // 0 for all, 1 for frequent
+            category: props.initialCategory || 0 // 0 for all, 1 for frequent
         }
     }
 
@@ -57,6 +57,9 @@ export class AllApplications extends React.Component {
                 <UbuntuApp key={index} {...props} />
             );
         });
+        if (!appsJsx.length && this.state.category === 1) {
+            return <div className="col-span-full text-center text-gray-300 pt-10">No frequent apps yet — open a few and they'll show up here.</div>;
+        }
         return appsJsx;
     }
 
@@ -70,11 +73,15 @@ export class AllApplications extends React.Component {
 
     render() {
         return (
-            <div className={"absolute h-full top-7 w-full z-20 pl-12 justify-center md:pl-20 border-black border-opacity-60 bg-black bg-opacity-70"}>
+            // above open windows (z-30), below the dock (z-40)
+            <div style={{ zIndex: 35 }} onKeyDown={e => { if (e.key === "Escape" && this.props.close) this.props.close(); }}
+                onClick={e => { if (e.target === e.currentTarget && this.props.close) this.props.close(); }}
+                className={"absolute h-full top-7 w-full outline-none backdrop-blur-sm pl-12 justify-center md:pl-20 border-black border-opacity-60 bg-black bg-opacity-70"}>
                 <div className={"flex md:pr-20 pt-5 align-center justify-center"}>
                     <div className={"flex w-2/3 h-full items-center pl-2 pr-2 bg-white border-black border-width-2 rounded-xl overflow-hidden md:w-1/3 "}>
                         <img className={"w-5 h-5"} alt="search icon" src={'./images/logos/search.png'} />
                         <input className={"w-3/4 p-1 bg-transparent focus:outline-none"}
+                            autoFocus
                             placeholder="Type to Search "
                             value={this.state.query}
                             onChange={this.handleChange} />

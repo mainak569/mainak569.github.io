@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import SmallArrow from './small_arrow';
 import onClickOutside from 'react-onclickoutside';
-import { VolumeIcon, WifiIcon, BatteryIcon } from './status';
+import { WifiIcon, BatteryIcon } from './status';
 
 class Slider extends Component {
 	render() {
@@ -9,8 +9,6 @@ class Slider extends Component {
 			<input
 				type="range"
 				onChange={this.props.onChange}
-				onMouseUp={this.props.onRelease}
-				onTouchEnd={this.props.onRelease}
 				className={this.props.className}
 				name={this.props.name}
 				min="0"
@@ -20,25 +18,6 @@ class Slider extends Component {
 			/>
 		);
 	}
-}
-
-// short GNOME-style "blip" so the volume slider has an audible effect
-function playBlip(volume) {
-	try {
-		const AudioCtx = window.AudioContext || window.webkitAudioContext;
-		if (!AudioCtx || volume <= 0) return;
-		const ctx = new AudioCtx();
-		const osc = ctx.createOscillator();
-		const gain = ctx.createGain();
-		osc.type = 'sine';
-		osc.frequency.value = 880;
-		gain.gain.setValueAtTime((volume / 100) * 0.25, ctx.currentTime);
-		gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.15);
-		osc.connect(gain).connect(ctx.destination);
-		osc.start();
-		osc.stop(ctx.currentTime + 0.16);
-		osc.onended = () => ctx.close();
-	} catch (e) { }
 }
 
 function formatBattery(battery) {
@@ -82,12 +61,8 @@ export class StatusCard extends Component {
 		document.getElementById('monitor-screen').style.filter = `brightness(${3 / 400 * e.target.value + 0.25})`;
 	};
 
-	handleSound = (e) => {
-		this.props.updateSystem({ volume: Number(e.target.value), muted: false });
-	};
-
 	render() {
-		const { system, updateSystem } = this.props;
+		const { system } = this.props;
 		const rowClass = "w-72 py-1.5 flex items-center justify-center bg-ub-cool-grey hover:bg-ub-warm-grey hover:bg-opacity-20";
 		const wifiLabel = system.online ? "OnePlus Nord CE3 Lite" : "Not Connected";
 
@@ -99,20 +74,6 @@ export class StatusCard extends Component {
 				}
 			>
 				<div className="absolute w-0 h-0 -top-1 right-6 top-arrow-up" />
-				<div className={rowClass}>
-					<div className="w-8">
-						<button title={system.muted ? "Unmute" : "Mute"} className="focus:outline-none" onClick={() => updateSystem({ muted: !system.muted })}>
-							<VolumeIcon level={system.volume} muted={system.muted} />
-						</button>
-					</div>
-					<Slider
-						onChange={this.handleSound}
-						onRelease={() => playBlip(system.volume)}
-						className="ubuntu-slider w-2/3"
-						value={system.muted ? 0 : system.volume}
-						name="volume_range"
-					/>
-				</div>
 				<div className={rowClass}>
 					<div className="w-8">
 						<img width="16px" height="16px" src="./themes/Yaru/status/display-brightness-symbolic.svg" alt="ubuntu brightness" />

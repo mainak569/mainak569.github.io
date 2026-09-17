@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Clock from '../util components/clock';
+import Calendar from '../util components/calendar';
 import Status from '../util components/status';
 import StatusCard from '../util components/status_card';
 
@@ -8,9 +9,8 @@ export default class Navbar extends Component {
 		super();
 		this.state = {
 			status_card: false,
+			calendar: false,
 			system: {
-				volume: 75,
-				muted: false,
 				online: true,
 				battery: { level: null, charging: false, chargingTime: Infinity, dischargingTime: Infinity },
 			},
@@ -18,13 +18,10 @@ export default class Navbar extends Component {
 	}
 
 	componentDidMount() {
-		let saved = {};
-		try {
-			saved = JSON.parse(localStorage.getItem('system-settings')) || {};
-		} catch (e) { }
-		this.updateSystem({ volume: saved.volume ?? 75, muted: !!saved.muted, online: navigator.onLine }, false);
+		this.updateSystem({ online: navigator.onLine });
 
 		window.addEventListener('online', this.handleOnline);
+		document.addEventListener('mousedown', this.closeCalendarOnOutsideClick);
 		window.addEventListener('offline', this.handleOnline);
 
 		// real battery status where the browser supports it (Chromium based browsers)
@@ -41,25 +38,26 @@ export default class Navbar extends Component {
 	componentWillUnmount() {
 		window.removeEventListener('online', this.handleOnline);
 		window.removeEventListener('offline', this.handleOnline);
+		document.removeEventListener('mousedown', this.closeCalendarOnOutsideClick);
 		if (this.battery) {
 			['levelchange', 'chargingchange', 'chargingtimechange', 'dischargingtimechange']
 				.forEach(evt => this.battery.removeEventListener(evt, this.syncBattery));
 		}
 	}
 
-	handleOnline = () => this.updateSystem({ online: navigator.onLine }, false);
+	handleOnline = () => this.updateSystem({ online: navigator.onLine });
 
 	syncBattery = () => {
 		const { level, charging, chargingTime, dischargingTime } = this.battery;
-		this.updateSystem({ battery: { level, charging, chargingTime, dischargingTime } }, false);
+		this.updateSystem({ battery: { level, charging, chargingTime, dischargingTime } });
 	}
 
-	updateSystem = (changes, persist = true) => {
-		this.setState(prev => ({ system: { ...prev.system, ...changes } }), () => {
-			if (!persist) return;
-			const { volume, muted } = this.state.system;
-			localStorage.setItem('system-settings', JSON.stringify({ volume, muted }));
-		});
+	updateSystem = (changes) => {
+		this.setState(prev => ({ system: { ...prev.system, ...changes } }));
+	}
+
+	closeCalendarOnOutsideClick = (e) => {
+		if (this.state.calendar && this.clockRef && !this.clockRef.contains(e.target)) this.setState({ calendar: false });
 	}
 
 	toggleStatusCard = () => {
@@ -71,19 +69,24 @@ export default class Navbar extends Component {
 			<div className="main-navbar-vp absolute top-0 right-0 w-screen shadow-md flex flex-nowrap justify-between items-center bg-ub-grey text-ubt-grey text-sm select-none z-50">
 				<div
 					tabIndex="0"
+					onClick={() => window.dispatchEvent(new CustomEvent('toggle-activities'))}
 					className={
-						'pl-3 pr-3 outline-none transition duration-100 ease-in-out border-b-2 border-transparent focus:border-ubb-orange py-1 '
+						'pl-3 pr-3 cursor-default outline-none transition duration-100 ease-in-out border-b-2 border-transparent focus:border-ubb-orange py-1 '
 					}
 				>
 					Activities
 				</div>
 				<div
-					tabIndex="0"
+					ref={el => (this.clockRef = el)}
 					className={
-						'pl-2 pr-2 text-xs md:text-sm outline-none transition duration-100 ease-in-out border-b-2 border-transparent focus:border-ubb-orange py-1'
+						'relative pl-2 pr-2 text-xs md:text-sm outline-none transition duration-100 ease-in-out border-b-2 py-1 cursor-default ' +
+						(this.state.calendar ? 'border-ubb-orange' : 'border-transparent')
 					}
 				>
-					<Clock />
+					<div onClick={() => this.setState(prev => ({ calendar: !prev.calendar }))}>
+						<Clock />
+					</div>
+					{this.state.calendar ? <Calendar close={() => this.setState({ calendar: false })} /> : null}
 				</div>
 				<div
 					id="status-bar"
@@ -102,7 +105,6 @@ export default class Navbar extends Component {
 						lockScreen={this.props.lockScreen}
 						visible={this.state.status_card}
 						system={this.state.system}
-						updateSystem={this.updateSystem}
 						toggleVisible={() => {
 							this.setState({ status_card: false });
 						}}
